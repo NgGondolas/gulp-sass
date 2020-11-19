@@ -99,10 +99,6 @@ const gulpSass = (options, sync) => through.obj((file, enc, cb) => { // eslint-d
     file.contents = sassObj.css; // eslint-disable-line no-param-reassign
     file.path = replaceExtension(file.path, '.css'); // eslint-disable-line no-param-reassign
 
-    if (file.stat) {
-      file.stat.atime = file.stat.mtime = file.stat.ctime = new Date(); // eslint-disable-line
-    }
-
     cb(null, file);
   };
 
@@ -122,6 +118,9 @@ const gulpSass = (options, sync) => through.obj((file, enc, cb) => { // eslint-d
     return cb(new PluginError(PLUGIN_NAME, error));
   };
 
+  // eslint-disable-next-line global-require, import/no-extraneous-dependencies
+  const compiler = gulpSass.compiler || require('node-sass');
+
   if (sync !== true) {
     //////////////////////////////
     // Async Sass render
@@ -133,13 +132,13 @@ const gulpSass = (options, sync) => through.obj((file, enc, cb) => { // eslint-d
       filePush(obj);
     };
 
-    gulpSass.compiler.render(opts, callback);
+    compiler.render(opts, callback);
   } else {
     //////////////////////////////
     // Sync Sass render
     //////////////////////////////
     try {
-      filePush(gulpSass.compiler.renderSync(opts));
+      filePush(compiler.renderSync(opts));
     } catch (error) {
       return errorM(error);
     }
@@ -161,8 +160,8 @@ gulpSass.logError = function logError(error) {
 };
 
 //////////////////////////////
-// Store compiler in a prop
+// Store compiler in a prop (node-sass is dynamically required if needed)
 //////////////////////////////
-gulpSass.compiler = require('node-sass');
+gulpSass.compiler = null;
 
 module.exports = gulpSass;
